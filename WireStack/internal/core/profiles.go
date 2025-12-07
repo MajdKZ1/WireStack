@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"opennet/internal/utils"
+	"wirestack/internal/utils"
 )
 
 // ClientProfile captures a client and its WireGuard parameters.

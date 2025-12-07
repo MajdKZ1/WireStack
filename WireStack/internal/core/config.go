@@ -4,16 +4,16 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"opennet/internal/utils"
+	"wirestack/internal/utils"
 )
 
 const (
-	defaultConfigDir = ".opennet"
+	defaultConfigDir = ".wirestack"
 	serversDir       = "servers"
 	runtimeDir       = "runtime"
 )
 
-// ConfigRoot returns the base configuration directory (~/.opennet) and ensures it exists.
+// ConfigRoot returns the base configuration directory (~/.wirestack) and ensures it exists.
 func ConfigRoot() (string, error) {
 	homePath, err := utils.ExpandPath("~/" + defaultConfigDir)
 	if err != nil {

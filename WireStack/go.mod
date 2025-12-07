@@ -1,4 +1,4 @@
-module opennet
+module wirestack
 
 go 1.21
 

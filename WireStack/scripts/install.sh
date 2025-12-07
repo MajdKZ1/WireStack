@@ -1,23 +1,12 @@
 #!/usr/bin/env bash
-# OpenNET installer/builder
+# Wirestack installer/builder
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 INSTALL_PREFIX="/usr/local/bin"
-TARGET_BIN="$REPO_ROOT/opennet"
+TARGET_BIN="$REPO_ROOT/wirestack"
 IS_ROOT="${EUID:-$(id -u)}"
-
-banner() {
-  cat <<'EOF'
-   ___              _   _   _ ______ _______
-  / _ \  ___ _ __  | | | | | |  _ \ \_   _/ \
- | | | |/ _ \ '__| | | | | | | |_) | | | |/  /
- | |_| |  __/ |    | |_| | |_| |  _ <  | | /\ \
-  \___/ \___|_|     \___/ \___/|_| \_\ |_| \/ /
-           OpenNET installer / by Majd Alzadjali
-EOF
-}
 
 log()  { printf "[INFO] %s\n" "$*"; }
 warn() { printf "[WARN] %s\n" "$*"; }
@@ -64,23 +53,23 @@ install_linux_ubuntu() {
   fi
   log "Updating apt repositories..."
   run_as_root apt-get update -y
-  log "Installing dependencies (Go, WireGuard tools, Tor, torsocks, Python)..."
+  log "Installing dependencies (Go, WireGuard tools, Python)..."
   run_as_root apt-get install -y --no-install-recommends \
-    golang-go wireguard wireguard-tools tor torsocks python3 python3-pip
+    golang-go wireguard wireguard-tools python3 python3-pip
 }
 
-build_opennet() {
+build_wirestack() {
   if ! command -v go >/dev/null 2>&1; then
     err "Go is not installed or not in PATH. Install Go then rerun."
     exit 1
   fi
-  log "Building OpenNET binary..."
-  (cd "$REPO_ROOT" && go build -o "$TARGET_BIN" ./cmd/opennet)
+  log "Building Wirestack binary..."
+  (cd "$REPO_ROOT" && go build -o "$TARGET_BIN" ./cmd/wirestack)
   log "Built $TARGET_BIN"
 }
 
 install_binary() {
-  local dest="$INSTALL_PREFIX/opennet"
+  local dest="$INSTALL_PREFIX/wirestack"
   if prompt_continue "Copy binary to $dest (may require sudo)?"; then
     if run_as_root cp "$TARGET_BIN" "$dest"; then
       run_as_root chmod +x "$dest"
@@ -91,9 +80,9 @@ install_binary() {
   fi
   local user_bin="$HOME/.local/bin"
   mkdir -p "$user_bin"
-  cp "$TARGET_BIN" "$user_bin/opennet"
-  chmod +x "$user_bin/opennet"
-  log "Installed to $user_bin/opennet. Ensure $user_bin is in your PATH."
+  cp "$TARGET_BIN" "$user_bin/wirestack"
+  chmod +x "$user_bin/wirestack"
+  log "Installed to $user_bin/wirestack. Ensure $user_bin is in your PATH."
 }
 
 ensure_path_contains_local_bin() {
@@ -124,56 +113,13 @@ validate_tools() {
   fi
 }
 
-linux_menu() {
-  while true; do
-    cat <<'EOF'
-Linux distro:
- 1) Ubuntu / Debian (supported)
- 2) Arch-based (coming soon)
- b) Back
-EOF
-    read -r -p "Select option: " choice
-    case "$choice" in
-      1)
-        install_linux_ubuntu
-        build_opennet
-        install_binary
-        validate_tools
-        ensure_path_contains_local_bin
-        return
-        ;;
-      2)
-        warn "Arch support coming soon. Nothing to do."
-        ;;
-      b|B)
-        return
-        ;;
-      *)
-        warn "Invalid choice."
-        ;;
-    esac
-  done
+main() {
+  log "Wirestack installer (Linux Ubuntu/Debian)"
+  install_linux_ubuntu
+  build_wirestack
+  install_binary
+  validate_tools
+  ensure_path_contains_local_bin
 }
 
-main_menu() {
-  banner
-  while true; do
-    cat <<'EOF'
-Choose platform:
- 1) Linux (Ubuntu/Debian supported now)
- 2) macOS (coming soon)
- 3) Windows (coming soon)
- q) Quit
-EOF
-    read -r -p "Select option: " choice
-    case "$choice" in
-      1) linux_menu ;;
-      2) warn "macOS support coming soon. Nothing to do yet." ;;
-      3) warn "Windows support coming soon. Nothing to do yet." ;;
-      q|Q) exit 0 ;;
-      *) warn "Invalid choice." ;;
-    esac
-  done
-}
-
-main_menu
+main

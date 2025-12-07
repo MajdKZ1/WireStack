@@ -22,12 +22,12 @@ func ExpandPath(path string) (string, error) {
 	return filepath.Join(home, path[1:]), nil
 }
 
-// EnsureDir creates the directory path if it does not already exist.
+// EnsureDir creates the directory path with restrictive permissions if it does not already exist.
 func EnsureDir(path string) error {
 	if path == "" {
 		return fmt.Errorf("directory path is empty")
 	}
-	if err := os.MkdirAll(path, 0o755); err != nil {
+	if err := os.MkdirAll(path, 0o700); err != nil {
 		return fmt.Errorf("failed to create directory %s: %w", path, err)
 	}
 	return nil

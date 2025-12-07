@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"opennet/internal/utils"
+	"wirestack/internal/utils"
 )
 
 // GenerateKeyPair uses the system WireGuard tools to produce a key pair.
@@ -52,9 +52,12 @@ func BuildServerConfig(profile *ServerProfile) (string, error) {
 	if profile == nil {
 		return "", fmt.Errorf("server profile is nil")
 	}
-	_, port, err := net.SplitHostPort(profile.Endpoint)
+	host, port, err := net.SplitHostPort(profile.Endpoint)
 	if err != nil {
 		return "", fmt.Errorf("invalid endpoint %s: %w", profile.Endpoint, err)
+	}
+	if host == "" || port == "" {
+		return "", fmt.Errorf("endpoint must include host and port")
 	}
 
 	builder := &strings.Builder{}
@@ -67,10 +70,11 @@ func BuildServerConfig(profile *ServerProfile) (string, error) {
 	for _, client := range profile.Clients {
 		fmt.Fprintf(builder, "[Peer]\n")
 		fmt.Fprintf(builder, "PublicKey = %s\n", client.PublicKey)
-		fmt.Fprintf(builder, "AllowedIPs = %s\n", strings.Join([]string{client.Address}, ", "))
-		if len(profile.DNS) > 0 {
-			fmt.Fprintf(builder, "# Client DNS: %s\n", strings.Join(profile.DNS, ", "))
+		allowed := client.AllowedIPs
+		if len(allowed) == 0 {
+			allowed = []string{client.Address}
 		}
+		fmt.Fprintf(builder, "AllowedIPs = %s\n", strings.Join(allowed, ", "))
 		fmt.Fprintf(builder, "\n")
 	}
 	return builder.String(), nil
