@@ -1,152 +1,126 @@
-# OpenNET
-By Majd Alzadjali
+# WireStack
 
-**OpenNET** is a minimal, self-hosted WireGuard manager designed for users who want full local control with zero external dependencies.
-It handles key generation, profile management, config rendering, and interface control using the system’s native `wg` / `wg-quick` tools.
+WireStack is a minimal, self-hosted **WireGuard networking framework** designed for users who want full local control with zero external dependencies.  
+It provides structured management for keys, peer profiles, interface orchestration, and automated configuration generation using the system’s native `wg` and `wg-quick` tools.
 
-No GUI. No cloud. No analytics.
-Just clean, local WireGuard management.
-
----
-
-## **Features**
-
-* Local profile storage under `~/.opennet/`
-* Server & client managers with automatic key generation
-* Config rendering for WireGuard servers and clients
-* Interface control using `wg-quick up/down`
-* Optional “Ninja Mode” wrapper via `torsocks`/`torify`
-* Lightweight Python TUI (optional) for easier interaction
+No cloud. No telemetry. No vendor lock-in.  
+Just clean, extensible WireGuard infrastructure.
 
 ---
 
-## **Build**
+## Features
+
+• Local profile storage under `~/.wirestack/`  
+• Automatic key generation for servers and clients  
+• Structured JSON profiles for reproducible configuration  
+• Config rendering for server and client WireGuard interfaces  
+• Interface orchestration via `wg-quick up` / `wg-quick down`  
+• Full CLI workflow for adding servers, adding clients, exporting configs and controlling interfaces  
+• Lightweight, portable, and fully open source  
+
+---
+
+## Build
 
 ```bash
-go build ./cmd/opennet
+go build ./cmd/wirestack
 ```
 
-This produces the `opennet` binary in the current working directory.
+This produces the `wirestack` binary in the current directory.
 
----
-
-## **Command Reference**
-
-### **Version**
-
-* `opennet version`
-  Displays the current CLI version.
-
----
-
-### **Key Management**
-
-* `opennet genkey`
-  Generates a WireGuard private/public key pair using the system `wg` tool.
-
----
-
-### **Server Management**
-
-* `opennet add-server --name <name> --endpoint <ip:port>`
-  Creates a new server profile under `~/.opennet/servers/<name>.json`.
-
-* `opennet list-servers`
-  Lists all stored server profiles.
-
-* `opennet delete-server <name>`
-  Deletes the specified server profile.
-
-* `opennet show server <name>`
-  Displays full details for a server (keys, peers, endpoint, etc.).
-
----
-
-### **Client Management**
-
-* `opennet add-client --server <name> --client <clientName>`
-  Generates new client keys and attaches the client to the specified server.
-
-* `opennet list-clients --server <name>`
-  Lists all clients associated with the server.
-
-* `opennet show client <server> <client>`
-  Displays full detail for the specified client.
-
-* `opennet export-client --server <name> --client <clientName> --output <path>`
-  Writes a standalone `.conf` file without bringing any interfaces up.
-
----
-
-### **Interface Control**
-
-* `opennet up <server>`
-  Renders the WireGuard server config and calls `wg-quick up`.
-
-* `opennet down <server>`
-  Shuts down the server interface via `wg-quick down`.
-
-* `opennet connect --server <name> --client <clientName> [--ninja]`
-  Renders the client config and brings the interface up on the local machine.
-
-* `opennet disconnect --server <name> --client <clientName> [--ninja]`
-  Brings down the locally-running client interface.
-
----
-
-## **Directory Structure**
-
-| Path                     | Purpose                                        |
-| ------------------------ | ---------------------------------------------- |
-| `~/.opennet/servers`     | Stored server and client profiles (JSON).      |
-| `~/.opennet/runtime`     | Rendered `.conf` files used by `wg-quick`.     |
-| System `wg` / `wg-quick` | Used for key generation and interface control. |
-
-All data stays local — no external network operations unless you explicitly bring interfaces up.
-
----
-
-## **Python Terminal UI**
-
-A lightweight helper interface is available at:
-
-```
-scripts/tui.py
-```
-
-Run it with:
+To make it system-wide:
 
 ```bash
-python3 scripts/tui.py
+sudo mv wirestack /usr/local/bin/
 ```
-
-It wraps core OpenNET commands with numbered menus for:
-
-* Adding/listing servers
-* Adding/listing clients
-* Exporting configs
-* Bringing interfaces up/down
-
-Set `$OPENNET_BIN` to override the binary path if needed.
 
 ---
 
-## **Ninja Mode (Tor Wrapper)**
+## Directory Structure
 
-Some client commands support:
+| Path                        | Purpose                                        |
+|----------------------------|------------------------------------------------|
+| `~/.wirestack/servers`     | Stored server and client profiles (JSON)       |
+| `~/.wirestack/runtime`     | Rendered `.conf` files used by `wg-quick`      |
+| System `wg` / `wg-quick`   | Used for key generation and interface control  |
 
-```
---ninja
-```
-
-This attempts to route `wg-quick` through `torsocks` or `torify`.
-
-**Notes:**
-
-* Tor must be running on the system.
-* One of `torsocks` or `torify` must be available in `$PATH`.
-* WireGuard uses UDP — most Tor setups will block or break UDP.
-  Ninja mode is experimental and may not work depending on your environment.
+All operations remain fully local unless an interface is explicitly activated.
 
 ---
+
+# Command Reference
+
+## Version
+
+`wirestack version`  
+Displays the current CLI version.
+
+---
+
+## Key Management
+
+`wirestack genkey`  
+Generates a WireGuard private/public key pair using the system `wg` tool.
+
+---
+
+## Server Management
+
+`wirestack add-server --name <name> --endpoint <ip:port>`  
+Creates a new server profile under `~/.wirestack/servers/<name>.json`.
+
+`wirestack list-servers`  
+Lists all stored server profiles.
+
+`wirestack delete-server <name>`  
+Removes a server profile completely.
+
+`wirestack show server <name>`  
+Displays full server details including keys, peers, and metadata.
+
+---
+
+## Client Management
+
+`wirestack add-client --server <name> --client <clientName>`  
+Creates a new client profile and attaches it to a server.
+
+`wirestack list-clients --server <name>`  
+Lists all clients registered under a server.
+
+`wirestack show client <server> <client>`  
+Shows a client’s details.
+
+`wirestack export-client --server <name> --client <clientName> --output <path>`  
+Exports a standalone WireGuard `.conf` file without activating an interface.
+
+---
+
+## Interface Control
+
+`wirestack up <server>`  
+Renders and activates the server interface using `wg-quick up`.
+
+`wirestack down <server>`  
+Shuts down a running server interface.
+
+`wirestack connect --server <name> --client <clientName>`  
+Renders and activates a local client interface.
+
+`wirestack disconnect --server <name> --client <clientName>`  
+Brings down the active local client interface.
+
+---
+
+## Notes
+
+• WireStack relies entirely on system `wg` and `wg-quick`.  
+• No background services or daemons are used.  
+• All data remains on the local machine unless explicitly exported.  
+
+---
+
+## License
+
+Licensed under **OpenNET LLC**.
 
